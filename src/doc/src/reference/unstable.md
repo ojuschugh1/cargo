@@ -80,7 +80,6 @@ Each new feature described below should explain how to use it.
     * [feature-unification](#feature-unification) --- Enable new feature unification modes in workspaces
 * Output behavior
     * [artifact-dir](#artifact-dir) --- Adds a directory where artifacts are copied to.
-    * [build-dir](#build-dir) --- Adds a directory where intermediate build artifacts are stored.
     * [Different binary name](#different-binary-name) --- Assign a name to the built binary that is separate from the crate name.
     * [root-dir](#root-dir) --- Controls the root directory relative to which paths are printed
 * Compile behavior
@@ -129,6 +128,7 @@ Each new feature described below should explain how to use it.
     * [warnings](#warnings) --- controls warning behavior; options for allowing or denying warnings.
     * [Package message format](#package-message-format) --- Message format for `cargo package`.
     * [`fix-edition`](#fix-edition) --- A permanently unstable edition migration helper.
+    * [Plumbing subcommands](https://github.com/crate-ci/cargo-plumbing) --- Low, level commands that act as APIs for Cargo, like `cargo metadata`
 
 ## allow-features
 
@@ -245,34 +245,6 @@ This can also be specified in `.cargo/config.toml` files.
 [build]
 artifact-dir = "out"
 ```
-
-## build-dir
-* Original Issue: [#14125](https://github.com/rust-lang/cargo/issues/14125)
-* Tracking Issue: [#14125](https://github.com/rust-lang/cargo/issues/14125)
-
-The directory where intermediate build artifacts will be stored.
-Intermediate artifacts are produced by Rustc/Cargo during the build process.
-
-```toml
-[build]
-build-dir = "out"
-```
-
-### `build.build-dir`
-
-* Type: string (path)
-* Default: Defaults to the value of `build.target-dir`
-* Environment: `CARGO_BUILD_BUILD_DIR`
-
-The path to where internal files used as part of the build are placed.
-
-This option supports path templating.
-
-Available template variables:
-* `{workspace-root}` resolves to root of the current workspace.
-* `{cargo-cache-home}` resolves to `CARGO_HOME`
-* `{workspace-path-hash}` resolves to a hash of the manifest path
-
 
 ## root-dir
 * Original Issue: [#9887](https://github.com/rust-lang/cargo/issues/9887)
@@ -1785,48 +1757,6 @@ Example:
 cargo +nightly metadata --lockfile-path=$LOCKFILES_ROOT/my-project/Cargo.lock -Z unstable-options
 ```
 
-## package-workspace
-* Tracking Issue: [#10948](https://github.com/rust-lang/cargo/issues/10948)
-
-This allows cargo to package (or publish) multiple crates in a workspace, even
-if they have inter-dependencies. For example, consider a workspace containing
-packages `foo` and `dep`, where `foo` depends on `dep`. Then
-
-```sh
-cargo +nightly -Zpackage-workspace package -p foo -p dep
-```
-
-will package both `foo` and `dep`, while
-
-```sh
-cargo +nightly -Zpackage-workspace publish -p foo -p dep
-```
-
-will publish both `foo` and `dep`.
-If `foo` and `dep` are the only crates in the workspace, you can use the `--workspace`
-flag instead of specifying the crates individually:
-
-```sh
-cargo +nightly -Zpackage-workspace package --workspace
-cargo +nightly -Zpackage-workspace publish --workspace
-```
-
-#### Lock-file behavior
-
-When packaging a binary at the same time as one of its dependencies, the binary
-will be packaged with a lock-file pointing at the dependency's registry entry
-*as though the dependency were already published*, even though it has not yet
-been. In this case, `cargo` needs to know the registry that the dependency
-will eventually be published on. `cargo` will attempt to infer this registry
-by examining the [the `publish` field](manifest.md#the-publish-field), falling back
-to `crates.io` if no `publish` field is set. To explicitly set the registry,
-pass a `--registry` or `--index` flag.
-
-```sh
-cargo +nightly -Zpackage-workspace --registry=my-registry package -p foo -p dep
-cargo +nightly -Zpackage-workspace --index=https://example.com package -p foo -p dep
-```
-
 ## native-completions
 * Original Issue: [#6645](https://github.com/rust-lang/cargo/issues/6645)
 * Tracking Issue: [#14520](https://github.com/rust-lang/cargo/issues/14520)
@@ -1978,6 +1908,18 @@ For example:
 
 ```console
 cargo +nightly fix -Zfix-edition=end=2024,future
+```
+
+## section-timings
+* Original Pull Request: [#15780](https://github.com/rust-lang/cargo/pull/15780)
+* Tracking Issue: [#15817](https://github.com/rust-lang/cargo/issues/15817)
+
+This feature can be used to extend the output of `cargo build --timings`. It will tell rustc
+to produce timings of individual compilation sections, which will be then displayed in the timings
+HTML/JSON output.
+
+```console
+cargo +nightly -Zsection-timings build --timings
 ```
 
 # Stabilized and removed features
@@ -2242,6 +2184,10 @@ More information can be found in the [config chapter](config.md#cache).
 
 Doctest cross-compiling is now unconditionally enabled starting in Rust 1.89. Running doctests with `cargo test` will now honor the `--target` flag.
 
+## package-workspace
+
+Multi-package publishing has been stabilized in Rust 1.90.0.
+
 ## compile-time-deps
 
 This permanently-unstable flag to only build proc-macros and build scripts (and their required dependencies),
@@ -2255,3 +2201,9 @@ Example:
 cargo +nightly build --compile-time-deps -Z unstable-options
 cargo +nightly check --compile-time-deps --all-targets -Z unstable-options
 ```
+
+## build-dir
+
+Support for `build.build-dir` was stabilized in the 1.91 release.
+See the [config documentation](config.md#buildbuild-dir) for information about changing the build-dir
+
