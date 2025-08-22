@@ -259,8 +259,8 @@ pub fn publish(ws: &Workspace<'_>, opts: &PublishOpts<'_>) -> CargoResult<()> {
 
                 if !remaining.is_empty() {
                     Some(format!(
-                        "the following crates have not been published yet: {}",
-                        remaining.join(", ")
+                        "the following crates have not been published yet:\n  {}",
+                        remaining.join("\n  ")
                     ))
                 } else {
                     None
@@ -685,7 +685,7 @@ fn transmit(
     let warnings = registry.publish(&new_crate, tarball).with_context(|| {
         if let Some(context) = workspace_context {
             format!(
-                "failed to publish `{}` v{} to registry at {}; {}",
+                "failed to publish `{}` v{} to registry at {}\n\nnote: {}",
                 pkg.name(),
                 pkg.version(),
                 registry.host(),
