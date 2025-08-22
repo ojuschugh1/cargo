@@ -242,7 +242,7 @@ pub fn publish(ws: &Workspace<'_>, opts: &PublishOpts<'_>) -> CargoResult<()> {
             let workspace_context = if original_packages.len() > 1 {
                 let remaining: Vec<_> = original_packages
                     .iter()
-                    .filter(|id| **id != pkg_id)
+                    .filter(|id| **id != pkg_id && !to_confirm.contains(*id))
                     .map(|id| {
                         let pkg = &pkg_dep_graph.packages[&id].0;
                         format!("{} v{}", pkg.name(), pkg.version())
