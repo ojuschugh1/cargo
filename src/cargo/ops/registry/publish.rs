@@ -258,15 +258,15 @@ pub fn publish(ws: &Workspace<'_>, opts: &PublishOpts<'_>) -> CargoResult<()> {
                 }
 
                 if !remaining.is_empty() {
-                    Some(format!(
+                    format!(
                         "the following crates have not been published yet:\n  {}",
                         remaining.join("\n  ")
-                    ))
+                    )
                 } else {
-                    None
+                    String::new()
                 }
             } else {
-                None
+                String::new()
             };
 
             let transmit_result = transmit(
@@ -672,7 +672,7 @@ fn transmit(
     registry: &mut Registry,
     registry_id: SourceId,
     dry_run: bool,
-    workspace_context: Option<String>,
+    workspace_context: String,
 ) -> CargoResult<()> {
     let new_crate = prepare_transmit(gctx, ws, pkg, registry_id)?;
 
@@ -683,20 +683,20 @@ fn transmit(
     }
 
     let warnings = registry.publish(&new_crate, tarball).with_context(|| {
-        if let Some(context) = workspace_context {
-            format!(
-                "failed to publish `{}` v{} to registry at {}\n\nnote: {}",
-                pkg.name(),
-                pkg.version(),
-                registry.host(),
-                context
-            )
-        } else {
+        if workspace_context.is_empty() {
             format!(
                 "failed to publish `{}` v{} to registry at {}",
                 pkg.name(),
                 pkg.version(),
                 registry.host()
+            )
+        } else {
+            format!(
+                "failed to publish `{}` v{} to registry at {}\n\nnote: {}",
+                pkg.name(),
+                pkg.version(),
+                registry.host(),
+                workspace_context
             )
         }
     })?;
