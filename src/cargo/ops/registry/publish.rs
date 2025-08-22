@@ -240,7 +240,7 @@ pub fn publish(ws: &Workspace<'_>, opts: &PublishOpts<'_>) -> CargoResult<()> {
 
             // Prepare workspace context for error message
             let workspace_context = if original_packages.len() > 1 {
-                let mut remaining: Vec<_> = original_packages
+                let remaining: Vec<_> = original_packages
                     .iter()
                     .filter(|id| **id != pkg_id)
                     .map(|id| {
@@ -248,14 +248,6 @@ pub fn publish(ws: &Workspace<'_>, opts: &PublishOpts<'_>) -> CargoResult<()> {
                         format!("{} v{}", pkg.name(), pkg.version())
                     })
                     .collect();
-                // Also include any packages that are still waiting for confirmation
-                for id in to_confirm.iter().filter(|id| **id != pkg_id) {
-                    let pkg = &pkg_dep_graph.packages[&id].0;
-                    let entry = format!("{} v{}", pkg.name(), pkg.version());
-                    if !remaining.contains(&entry) {
-                        remaining.push(entry);
-                    }
-                }
 
                 if !remaining.is_empty() {
                     format!(
